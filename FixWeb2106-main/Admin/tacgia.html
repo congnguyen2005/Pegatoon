@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Quản lý Tác giả</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: #343a40;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .sidebar-logo img {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+        }
+
+        .sidebar a {
+            display: block;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .sidebar a:hover {
+            background: #495057;
+        }
+
+        .sidebar a.active {
+            background: #007bff;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .search input {
+            padding-left: 30px;
+            height: 30px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-create {
+            background-color: #28a745;
+        }
+
+        .btn-edit {
+            background-color: #ffc107;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+        }
+
+        .btn-view {
+            background-color: #007bff;
+        }
+
+        .overview {
+            padding: 30px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        td img {
+            width: 80px;
+            height: auto;
+            border-radius: 5px;
+        }
+
+        .actions button {
+            margin-right: 5px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 500px;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+        }
+
+        .modal .actions {
+            text-align: right;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="../Home/image/z6672631562592_50bb74da1db4c2e3f301e11fbb0569fd.jpg" alt="PegaToon Logo" />
+            <h2>PegaToon</h2>
+        </div>
+        <a href="../Home/Dashboard.html">Tổng quan</a>
+        <a href="quanlytruyenchuong.html">Quản lý truyện</a>
+        <a href="quanlytheloai.html">Quản lý thể loại</a>
+        <a href="quanlynguoidung.html">Quản lý người dùng</a>
+        <a href="tacgia.html" class="active">Quản lý tác giả</a>
+        <a href="baocao.html">Quản lý báo cáo</a>
+        <a href="coupons.html">Quản lý coupons</a>
+        <a href="quanlytintuc.html">Quản lý tin tức</a>
+    </div>
+
+    <!-- Main content -->
+    <div class="main">
+        <div class="topbar">
+            <div class="search">
+                <input type="text" placeholder="Tìm kiếm tác giả..." />
+            </div>
+            <button class="btn btn-create" onclick="openModal()">+ Tạo tác giả</button>
+        </div>
+
+        <div class="overview">
+            <h1>📚 Bảng quản lý tác giả</h1>
+            <table id="authorTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tiêu đề</th>
+                        <th>Nội dung</th>
+                        <th>Ảnh bìa</th>
+                        <th>Nguồn</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Tiểu sử Ngọc</td>
+                        <td>Nhà văn đạt nhiều giải thưởng...</td>
+                        <td><img src="../images/ngoc.jpg" /></td>
+                        <td>ngoc.vn</td>
+                        <td>Đã đăng</td>
+                        <td class="actions">
+                            <button class="btn btn-view" onclick="viewRow(this)">Xem</button>
+                            <button class="btn btn-edit" onclick="editRow(this)">Sửa</button>
+                            <button class="btn btn-delete" onclick="deleteRow(this)">Xóa</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Tạo mới tác giả</h3>
+            <input id="inputTitle" placeholder="Tiêu đề" />
+            <input id="inputContent" placeholder="Nội dung" />
+            <input id="inputImage" placeholder="URL ảnh bìa" />
+            <input id="inputSource" placeholder="Nguồn" />
+            <select id="inputStatus">
+                <option>Đã đăng</option>
+                <option>Đã ẩn</option>
+            </select>
+            <div class="actions">
+                <button onclick="closeModal()">Hủy</button>
+                <button onclick="saveAuthor()" class="btn btn-create">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let editTargetRow = null;
+
+        function openModal(isEdit = false) {
+            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('modalTitle').textContent = isEdit ? "Sửa tác giả" : "Tạo mới tác giả";
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById("inputTitle").value = "";
+            document.getElementById("inputContent").value = "";
+            document.getElementById("inputImage").value = "";
+            document.getElementById("inputSource").value = "";
+            document.getElementById("inputStatus").value = "Đã đăng";
+            editTargetRow = null;
+        }
+
+        function saveAuthor() {
+            const title = document.getElementById("inputTitle").value;
+            const content = document.getElementById("inputContent").value;
+            const image = document.getElementById("inputImage").value;
+            const source = document.getElementById("inputSource").value;
+            const status = document.getElementById("inputStatus").value;
+
+            if (!title || !content || !image || !source) {
+                alert("Vui lòng nhập đầy đủ thông tin!");
+                return;
+            }
+
+            const table = document.getElementById("authorTable").querySelector("tbody");
+
+            if (editTargetRow) {
+                editTargetRow.cells[1].textContent = title;
+                editTargetRow.cells[2].textContent = content;
+                editTargetRow.cells[3].innerHTML = `<img src="${image}" />`;
+                editTargetRow.cells[4].textContent = source;
+                editTargetRow.cells[5].textContent = status;
+            } else {
+                const id = table.rows.length + 1;
+                const newRow = `
+          <tr>
+            <td>${id}</td>
+            <td>${title}</td>
+            <td>${content}</td>
+            <td><img src="${image}" /></td>
+            <td>${source}</td>
+            <td>${status}</td>
+            <td class="actions">
+              <button class="btn btn-view" onclick="viewRow(this)">Xem</button>
+              <button class="btn btn-edit" onclick="editRow(this)">Sửa</button>
+              <button class="btn btn-delete" onclick="deleteRow(this)">Xóa</button>
+            </td>
+          </tr>
+        `;
+                table.insertAdjacentHTML("beforeend", newRow);
+            }
+
+            closeModal();
+        }
+
+        function viewRow(button) {
+            const row = button.closest("tr");
+            const title = row.cells[1].textContent;
+            const content = row.cells[2].textContent;
+            alert(`📖 ${title}\n\n${content}`);
+        }
+
+        function editRow(button) {
+            const row = button.closest("tr");
+            editTargetRow = row;
+            document.getElementById("inputTitle").value = row.cells[1].textContent;
+            document.getElementById("inputContent").value = row.cells[2].textContent;
+            document.getElementById("inputImage").value = row.cells[3].querySelector("img").src;
+            document.getElementById("inputSource").value = row.cells[4].textContent;
+            document.getElementById("inputStatus").value = row.cells[5].textContent;
+            openModal(true);
+        }
+
+        function deleteRow(button) {
+            const row = button.closest("tr");
+            if (confirm("Bạn có chắc muốn xóa tác giả này không?")) {
+                row.remove();
+            }
+        }
+    </script>
+</body>
+
+</html>

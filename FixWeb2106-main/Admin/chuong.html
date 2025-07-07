@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Danh sách chương</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    .preview-image {
+  width: 100%;
+  margin: 10px 0;
+  border-radius: 5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background: #eee;
+    }
+    img {
+      height: 60px;
+    }
+    .btn {
+      padding: 8px 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      text-decoration: none;
+    }
+   /* Modal overlay */
+#previewModal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.85);
+  z-index: 9999;
+  overflow-y: auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Nội dung modal */
+#previewContainer {
+  background: #fff;
+  border-radius: 10px;
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+#previewContainer h3 {
+  margin-top: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.preview-image {
+  width: 100%;
+  height: auto;
+  margin: 10px 0;
+  border-radius: 5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+/* Nút đóng */
+#previewContainer .btn {
+  margin-top: 15px;
+}
+
+/* Modal sửa chương */
+#editChapterModal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  z-index: 9999;
+  overflow-y: auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+#editChapterContainer {
+  background: #fff;
+  border-radius: 10px;
+  max-width: 500px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+#editChapterContainer h3 {
+  margin-top: 0;
+  font-size: 22px;
+  color: #333;
+}
+
+#editChapterContainer input, #editChapterContainer textarea {
+  width: 100%;
+  margin: 10px 0;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+#editChapterContainer .btn {
+  margin-top: 10px;
+}
+#addChapterModal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85);
+  z-index: 9999;
+  overflow-y: auto;
+  padding: 20px;
+  box-sizing: border-box;
+} 
+#addChapterContainer h3 {
+  margin-top: 0;
+  font-size: 22px;
+  color: #333;
+}
+
+#addChapterContainer input,
+#addChapterContainer textarea {
+  width: 100%;
+  margin: 10px 0;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+#addChapterContainer {
+  background: #fff;
+  border-radius: 10px;
+  max-width: 500px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+
+
+#addChapterContainer .btn {
+  margin-top: 10px;
+  margin-right: 8px;
+}
+@media (max-width: 600px) {
+  #previewContainer, #editChapterContainer {
+    margin: 10px auto;
+    padding: 15px;
+  }
+  
+
+
+
+@media (max-width: 600px) {
+ 
+}
+}
+
+
+  </style>
+</head>
+
+<body>
+  <h2>Danh sách chương</h2>
+  <button class="btn" onclick="openAddChapterModal()">+ Thêm chương</button>    
+  <div>
+    <a href="quanlytruyenchuong.html" class="btn">← Quay lại quản lý truyện</a>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Tên chương</th>
+        <th>Ngày đăng</th>
+        <th>Hành động</th>
+      </tr>
+    </thead>
+    <tbody id="chapterBody"></tbody>
+  </table>
+  <div id="addChapterModal" class="modal-overlay">
+    <div id="addChapterContainer" class="modal-container">
+      <h3 id="chapterModalTitle">Thêm chương</h3>
+      <input id="chapterTitle" placeholder="Tên chương">
+      <textarea id="chapterImages" rows="5" placeholder="Mỗi link ảnh 1 dòng"></textarea>
+      <button onclick="saveChapter()" class="btn">Lưu</button>
+      <button onclick="closeAddChapterModal()" class="btn" style="background:#6c757d;">Đóng</button>
+    </div>
+  </div>
+  
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDUfWVlly9sKokNHY-mYvH3r14WaV0HUjM",
+      authDomain: "datn-1fc4c.firebaseapp.com",
+      projectId: "datn-1fc4c",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const firestore = firebase.firestore();
+
+    const params = new URLSearchParams(window.location.search);
+    const mangaId = params.get("id");
+
+    if (!mangaId) {
+      alert("Không tìm thấy ID truyện!");
+    } else {
+      loadChapters();
+    }
+
+    function loadChapters() {
+      const tbody = document.getElementById("chapterBody");
+      tbody.innerHTML = "";
+      let index = 1;
+
+      firestore.collection("mangas").doc(mangaId).collection("chapters")
+        .orderBy("createdAt", "asc")
+        .get()
+        .then(snapshot => {
+          if (snapshot.empty) {
+            const row = document.createElement("tr");
+            row.innerHTML = `<td colspan="5">Chưa có chương nào</td>`;
+            tbody.appendChild(row);
+            return;
+          }
+
+          snapshot.forEach(doc => {
+  const chapter = doc.data();
+  const row = document.createElement("tr");
+  row.innerHTML = `
+    <td>${index++}</td>
+    <td>${chapter.title}</td>
+    <td>${chapter.createdAt ? new Date(chapter.createdAt.seconds * 1000).toLocaleString() : ""}</td>
+    <td>
+      <button onclick="previewChapter('${doc.id}')">Xem trước</button>
+      <button onclick="editChapter('${doc.id}')">Sửa</button>
+      <button onclick="deleteChapter('${doc.id}')">Xoá</button>
+    </td>
+  `;
+  tbody.appendChild(row);
+});
+        })
+        .catch(err => {
+          console.error("❌ Lỗi load chapter:", err);
+        });
+    }
+    let currentChapterId = null;
+function openAddChapterModal() {
+  currentChapterId = null;
+  document.getElementById("chapterTitle").value = "";
+  document.getElementById("chapterImages").value = "";
+  document.getElementById("chapterModalTitle").innerText = "Thêm chương";
+  document.getElementById("addChapterModal").style.display = "block";
+}
+
+function closeAddChapterModal() {
+  document.getElementById("addChapterModal").style.display = "none";
+}
+function saveChapter() {
+  const title = document.getElementById("chapterTitle").value;
+  const imagesInput = document.getElementById("chapterImages").value;
+  const images = imagesInput.split("\n").map(link => link.trim()).filter(link => link);
+
+  if (!title || images.length === 0) {
+    alert("Điền đủ thông tin!");
+    return;
+  }
+
+  const data = { title, images, createdAt: firebase.firestore.Timestamp.now() };
+  const collection = firestore.collection("mangas").doc(mangaId).collection("chapters");
+
+  if (currentChapterId) {
+  collection.doc(currentChapterId).update(data).then(() => {
+    loadChapters();
+    closeEditChapterModal();
+  });
+} else {
+  collection.add(data).then(() => {
+    loadChapters();
+    closeAddChapterModal();
+  });
+}
+}
+
+
+function deleteChapter(chapterId) {
+  if (confirm("Xoá chương này?")) {
+    firestore.collection("mangas").doc(mangaId).collection("chapters").doc(chapterId).delete()
+    .then(() => loadChapters());
+  }
+}
+function previewChapter(chapterId) {
+  const previewModal = document.getElementById("previewModal");
+  const previewContent = document.getElementById("previewContent");
+  previewContent.innerHTML = "<p>Đang tải...</p>";
+
+  firestore.collection("mangas").doc(mangaId).collection("chapters").doc(chapterId).get()
+  .then(doc => {
+    if (!doc.exists) {
+      previewContent.innerHTML = "<p>Không tìm thấy chương!</p>";
+      return;
+    }
+    const chapter = doc.data();
+    document.getElementById("previewTitle").innerText = chapter.title;
+    previewContent.innerHTML = chapter.images.map(link => `<img src="${link}" class="preview-image">`).join("");
+  });
+
+  previewModal.style.display = "block";
+}
+
+function closePreviewModal() {
+  document.getElementById("previewModal").style.display = "none";
+}
+
+// Sửa chương
+function editChapter(chapterId) {
+  firestore.collection("mangas").doc(mangaId).collection("chapters").doc(chapterId).get()
+  .then(doc => {
+    if (!doc.exists) {
+      alert("Không tìm thấy chương!");
+      return;
+    }
+    const chapter = doc.data();
+    document.getElementById("editChapterTitle").value = chapter.title;
+    document.getElementById("editChapterImages").value = chapter.images.join("\n");
+    document.getElementById("editChapterId").value = chapterId;
+    document.getElementById("editChapterModal").style.display = "block";
+  });
+}
+
+function saveEditedChapter() {
+  const id = document.getElementById("editChapterId").value;
+  const title = document.getElementById("editChapterTitle").value;
+  const imagesInput = document.getElementById("editChapterImages").value;
+  const images = imagesInput.split("\n").map(link => link.trim()).filter(link => link);
+
+  if (!title || images.length === 0) {
+    alert("Điền đủ thông tin!");
+    return;
+  }
+
+  firestore.collection("mangas").doc(mangaId).collection("chapters").doc(id).update({
+    title, images
+  }).then(() => {
+    loadChapters();
+    closeEditChapterModal();
+  });
+}
+
+function closeEditChapterModal() {
+  document.getElementById("editChapterModal").style.display = "none";
+}
+
+
+  </script>
+<div id="previewModal">
+  <div id="previewContainer">
+    <h3 id="previewTitle">Xem trước chương</h3>
+    <div id="previewContent"></div>
+    <button onclick="closePreviewModal()" class="btn">Đóng</button>
+  </div>
+</div>
+
+<!-- Modal sửa chương -->
+<div id="editChapterModal">
+  <div id="editChapterContainer">
+    <h3>Sửa chương</h3>
+    <input id="editChapterTitle" placeholder="Tên chương">
+    <textarea id="editChapterImages" rows="6" placeholder="Mỗi link ảnh 1 dòng"></textarea>
+    <input type="hidden" id="editChapterId">
+    <button onclick="saveEditedChapter()" class="btn">Lưu thay đổi</button>
+    <button onclick="closeEditChapterModal()" class="btn" style="background:#6c757d;">Huỷ</button>
+  </div>
+</div>
+
+</body>
+
+</html>
