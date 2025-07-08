@@ -1,22 +1,30 @@
-# node modules
-node_modules/
+# Android build cache
+android/app/.cxx/
+android/app/.externalNativeBuild/
 
-# logs
+# iOS build
+ios/build/
+ios/Pods/
+
+# Environment files
+.env
+
+# Build outputs
+*.keystore
+*.jks
+
+# Misc
+.expo/
 *.log
+*.tmp
 
 # OS files
 .DS_Store
 Thumbs.db
 
-# IDE folders
+# IDE
 .vscode/
 .idea/
 
-# build folders
-android/.gradle/
-android/app/build/
-ios/Pods/
-ios/build/
-
-# misc
-.expo/
+# node_modules
+node_modules/
